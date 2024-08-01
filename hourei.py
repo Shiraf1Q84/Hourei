@@ -1,63 +1,44 @@
 import streamlit as st
-import sqlite3
-import spacy
-from spacy.lang.ja import Japanese
+import pandas as pd
 
-# spaCyモデルのロード（大きめの日本語モデルを使用）
-try:
-    nlp = spacy.load("ja_core_news_lg")
-except IOError:
-    st.error("spaCyの日本語モデルがインストールされていません。'python -m spacy download ja_core_news_lg'を実行してインストールしてください。")
-    st.stop()
+@st.cache_resource
+def load_spacy_model():
+    import spacy
+    return spacy.load("ja_core_news_lg")
 
-# データベース接続
-def get_db_connection():
-    return sqlite3.connect('law_database.db')
+nlp = load_spacy_model()
 
-# 法令データの取得
-def get_laws(cursor):
-    cursor.execute("SELECT id, name, article_number, content FROM laws")
-    return cursor.fetchall()
+# CSVファイルからデータを読み込む
+@st.cache_data
+def load_data():
+    return pd.read_csv('laws.csv')
 
-# 自然言語処理による検索
-def search_laws(query, laws):
+laws_df = load_data()
+
+# 検索関数
+def search_laws(query):
     doc = nlp(query)
-    
-    # 検索結果をランキングする
     ranked_results = []
-    for law in laws:
-        law_doc = nlp(law[3])  # 条文本文
+    for _, law in laws_df.iterrows():
+        law_doc = nlp(law['content'])
         similarity = law_doc.similarity(doc)
         ranked_results.append((similarity, law))
     ranked_results.sort(key=lambda x: x[0], reverse=True)
-
-    # 上位10件まで返す
     return [result[1] for result in ranked_results[:10]]
 
-# Streamlit アプリケーション
+# メイン関数
 def main():
     st.title("法令検索")
-
     query = st.text_input("キーワードまたは文章を入力してください")
-
     if query:
-        try:
-            with get_db_connection() as conn:
-                cursor = conn.cursor()
-                laws = get_laws(cursor)
-                
-            results = search_laws(query, laws)
-            if results:
-                st.write("検索結果:")
-                for law in results:
-                    st.subheader(f"{law[1]} - {law[2]}")
-                    st.write(law[3])
-            else:
-                st.write("該当する条文が見つかりませんでした。")
-        except sqlite3.Error as e:
-            st.error(f"データベースエラーが発生しました: {e}")
-        except Exception as e:
-            st.error(f"予期せぬエラーが発生しました: {e}")
+        results = search_laws(query)
+        if results:
+            st.write("検索結果:")
+            for law in results:
+                st.subheader(f"{law['name']} - {law['article_number']}")
+                st.write(law['content'])
+        else:
+            st.write("該当する条文が見つかりませんでした。")
 
 if __name__ == "__main__":
     main()
