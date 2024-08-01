@@ -1,4 +1,5 @@
 streamlit
-spacy>=3.5.0,<3.6.0
+numpy==1.22.4
+spacy==3.5.0
 https://github.com/explosion/spacy-models/releases/download/ja_core_news_lg-3.5.0/ja_core_news_lg-3.5.0-py3-none-any.whl
 thinc>=8.1.0,<8.2.0
