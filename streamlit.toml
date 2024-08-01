@@ -1,0 +1,9 @@
+[server]
+headless = true
+
+[theme]
+primaryColor="#F63366" # 赤色のプライマリーカラーを設定
+backgroundColor="#FFFFFF" # 白色の背景色を設定
+secondaryBackgroundColor="#E8F0FE" # 水色のセカンダリー背景色を設定
+textColor="#262730" # 濃いグレーのテキスト色を設定
+font="sans-serif" # フォントを「sans-serif」に設定
